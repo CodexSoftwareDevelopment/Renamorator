@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/CodexSoftwareDevelopment/Renamorator/main/assets/codex_logo.png" alt="Codex Software Development Logo" width="200"/>
+</p>
+
 # Renamorator 🗂️📄
 
 Renamorator is a semi-automated document renaming tool built with Python. It helps standardize naming conventions for large batches of files (like scanned production reports or blend sheets) using a simple GUI. The tool extracts fields such as document number, blend name, volume, and equipment from messy filenames and renames them into a clean, searchable format:
