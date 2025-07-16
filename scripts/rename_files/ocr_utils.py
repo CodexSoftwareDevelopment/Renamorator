@@ -1,4 +1,5 @@
 from PIL import Image
+from concurrent.futures import ThreadPoolExecutor
 import pytesseract
 import os
 
@@ -6,22 +7,25 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\Users\DeidreClay\AppData\Local\Prog
 
 def extract_text_from_tiff(file_path):
     """
-    Given a multipage .tif file path, open each page,
-    run OCR on it, and return the concatenated text.
+    Parallel OCR: splits a multipage TIFF into pages,
+    then runs OCR on each page concurrently.
     """
 
-     # Open the TIFF as a PIL Image object
-    img = Image.open(file_path)
-    n_pages = getattr(img, "n_frames", 1)
+     # 1) Figure out how many pages are in this TIFF
+    with Image.open(file_path) as img:
+       n_pages = getattr(img, "n_frames", 1)
 
-    # Prepare a list to collect text from each page
-    pages_text = []
+    # 2) Define a mini‐task that OCRs a single page
+    def ocr_page(page_num, total=n_pages, fname=os.path.basename(file_path)):
+        print(f"  ↳ OCR page {page_num+1}/{total} of {fname}")
+        with Image.open(file_path) as page_img:
+            page_img.seek(page_num)
+            return pytesseract.image_to_string(page_img)
+        
+    # 3) Spin up one thread per CPU core (or fallback to 2)
+    workers = os.cpu_count() or 2
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        pages_text = list(pool.map(ocr_page, range(n_pages)))
 
-    # Iterate over each frame (page) in the TIFF
-    for i in range(n_pages):
-        print(f"  ↳ OCR page {i+1}/{n_pages} of {os.path.basename(file_path)}")
-        img.seek(i)
-        pages_text.append(pytesseract.image_to_string(img))
-
-    # Join all pages into one big string and return
+    # 4) Join all the page‑texts into one big string
     return "\n".join(pages_text)
