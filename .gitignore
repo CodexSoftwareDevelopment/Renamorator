@@ -11,3 +11,7 @@ __pycache__/
 
 # Ignore VSCode settings (optional)
 .vscode/
+
+# Ignore all TIF images (and TIFF variants)
+*.tif
+*.tiff
