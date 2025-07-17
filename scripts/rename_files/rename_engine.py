@@ -13,11 +13,24 @@ def rename_files(tif_paths: list[str]) -> dict[str, str]:
     mapping: dict[str, str] = {}
 
     for old_path in tif_paths:
-        full_text = extract_text_from_tiff(old_path)
-        new_name = parse_new_filename(full_text)
+        try:
+            full_text = extract_text_from_tiff(old_path)
+        except Exception as e:
+            print(f"⚠️ OCR failed for {old_path!r}: {e}")
+            continue
+
+        try:
+            new_name = parse_new_filename(full_text)
+        except Exception as e:
+            print(f"⚠️ Filename parsing failed for {old_path!r}: {e}")
+            continue
+        
         new_path = os.path.join(os.path.dirname(old_path), new_name)
 
-        os.rename(old_path,new_path)
-        mapping[old_path] = new_path
+        try:
+            os.rename(old_path, new_path)
+            mapping[old_path] = new_path
+        except OSError as e:
+            print(f"⚠️ Failed to rename {old_path!r} → {new_path!r}: {e}")
 
     return mapping

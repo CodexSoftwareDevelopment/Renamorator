@@ -11,11 +11,21 @@ def parse_new_filename(ocr_text: str) -> str:
       3) Combining these pieces with ' - ' and appending .tif
     """
     # 1) Doc number segment
-    codes = extract_document_numbers(ocr_text)
+    try:
+        codes = extract_document_numbers(ocr_text)
+    except re.error as e:
+        print(f"⚠️ Document‐number regex failed: {e}")
+        codes = []
+
     doc_part = " ".join(codes) + " - " if codes else "UNKNOWN - "
 
     # 2) Title blocks and single prompt
-    blocks = extract_title_blocks(ocr_text)
+    try:
+        blocks = extract_title_blocks(ocr_text)
+    except re.error as e:
+        print(f"⚠️ Document‐number regex failed: {e}")
+        blocks = []
+
     meta = prompt_for_blend_and_volume(blocks)
 
     # 3) Assemble base parts: doc_part, volume, blend
@@ -26,7 +36,12 @@ def parse_new_filename(ocr_text: str) -> str:
         parts.append(meta["blend"])
 
     # 4) Equipment codes: only from the same title blocks
-    equip_codes = extract_equipment_codes(blocks)
+    try:
+        equip_codes = extract_equipment_codes(blocks)
+    except re.error as e:
+        print(f"⚠️ Document‐number regex failed: {e}")
+        equip_codes = []
+        
     if equip_codes:
         parts.append(" ".join(equip_codes))
 

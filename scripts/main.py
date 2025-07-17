@@ -4,7 +4,15 @@ from rename_files.file_collector import collect_tif_files
 from rename_files.rename_engine import rename_files
 
 def main():
-    files = collect_tif_files('assets/test_files')
+    try:
+        files = collect_tif_files('assets/test_files')
+    except FileNotFoundError as e:
+        print(f"❌ Error: {e}")
+        return
+    if not files:
+        print("⚠️  No TIFF files found; please check the folder path.")
+        return
+
     result = rename_files(files)
     for old, new in result.items():
         print(f"{os.path.basename(old)} → {os.path.basename(new)}")

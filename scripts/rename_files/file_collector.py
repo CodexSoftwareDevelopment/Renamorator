@@ -15,7 +15,7 @@ def collect_tif_files(folder_path):
 
     # Verify the folder exists
     if not os.path.isdir(folder):
-        raise FileNotFoundError(f"Folder  not found: {folder}")
+        raise FileNotFoundError(f"Folder not found: {folder}")
     
     # Walk the folder and pick up only .tif files
     tif_paths = [
