@@ -1,6 +1,7 @@
 import re
 from .doc_number_extractor import extract_document_numbers
 from .blend_name_volume_extractor import extract_title_blocks, prompt_for_blend_and_volume
+from .equipment_code_extractor import extract_equipment_codes
 
 def parse_new_filename(ocr_text: str) -> str:
     """
@@ -17,11 +18,17 @@ def parse_new_filename(ocr_text: str) -> str:
     blocks = extract_title_blocks(ocr_text)
     meta = prompt_for_blend_and_volume(blocks)
 
-    # 3) Build filenames
+    # 3) Assemble base parts: doc_part, volume, blend
     parts = [doc_part.rstrip(" -")]
     if meta.get("volume"):
         parts.append(meta["volume"])
     if meta.get("blend"):
         parts.append(meta["blend"])
 
+    # 4) Equipment codes: only from the same title blocks
+    equip_codes = extract_equipment_codes(blocks)
+    if equip_codes:
+        parts.append(" ".join(equip_codes))
+
+    # Final filename
     return " - ".join(parts) + ".tif"
