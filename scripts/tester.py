@@ -4,6 +4,10 @@ from rename_files.ocr_utils import extract_text_from_tiff
 from rename_files.file_collector import collect_tif_files
 from rename_files.doc_number_extractor import extract_document_numbers
 from rename_files.text_parser import parse_new_filename
+from rename_files.blend_name_volume_extractor import (
+    extract_title_blocks,
+    prompt_for_blend_and_volume,
+)
 
 def main():
     """
@@ -29,9 +33,21 @@ def main():
         docs = extract_document_numbers(full_text)
         print("📄 Document numbers found:", docs or ["<none>"])
 
-        # c) Show full parsed filename stub
+        # c) Show full parsed filename stub (without blend/volume)
         stub = parse_new_filename(full_text)
-        print("🗂 Parsed document number:   ", stub, "\n")
+        print("🗂 Parsed filename stub:", stub)
+
+        # d) Extract title blocks around each doc number
+        blocks = extract_title_blocks(full_text)
+        if blocks:
+            # e) Prompt user to supply blend name/volume for each block
+            metadata = prompt_for_blend_and_volume(blocks)
+            for i, meta in enumerate(metadata, start=1):
+                print(f"▶️ Block #{i} metadata:", meta)
+        else:
+            print("⚠️ No title blocks found to extract blend/volume.")
+
+        print()  # blank line
 
 if __name__ == '__main__':
     main()
