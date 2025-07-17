@@ -23,15 +23,20 @@ def extract_title_blocks(text: str, context_lines: int = 8) -> List[str]:
 
 def prompt_for_blend_and_volume(blocks: List[str]) -> List[Dict[str, str]]:
     """
-    For each title block, display it and ask the user to copy/paste or confirm
-    the blend name and volume. Returns a list of metadata dicts:
-    [{"blend": ..., "volume": ...}, ...]
+    Displays all title blocks together, then prompts once for blend & volume.
+    Returns a single dict {"blend":…, "volume":…}.
     """
-    results: List[Dict[str, str]] = []
+    # If there are no blocks, return empties immediately
+    if not blocks:
+        return {"blend": None, "volume": None}
+
+    # 1) Show every block
+    print("\n── Official Title Blocks ──")
     for i, block in enumerate(blocks, start=1):
-        print(f"\n── Title Block #{i} ──")
-        print(block)
-        blend = input("Blend name (or leave blank): ").strip() or None
-        volume = input("Volume (or leave blank): ").strip() or None
-        results.append({"blend": blend, "volume": volume})
-    return results
+        print(f"\nBlock #{i}:\n{block}")
+
+    # 2) Prompt once
+    blend  = input("\nBlend name (or leave blank): ").strip() or None
+    volume = input("Volume (or leave blank): ").strip() or None
+
+    return {"blend": blend, "volume": volume}

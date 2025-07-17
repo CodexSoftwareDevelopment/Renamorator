@@ -1,29 +1,23 @@
 import os 
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from .ocr_utils import extract_text_from_tiff
 from .text_parser import parse_new_filename
 
 def rename_files(tif_paths: list[str]) -> dict[str, str]:
     """
-    :param tif_paths: list of full paths to .tif files
-    :returns: mapping old_path → new_path
+    For each TIFF:
+      • OCR → full_text
+      • parse_new_filename → [new_fname1, new_fname2, …]
+      • os.rename for each new_fname (you may want to copy or suffix if multiple)
+      • record mapping old_path → [new_paths]
     """
     mapping: dict[str, str] = {}
 
-    # 1) OCR all files in parallel
-    with ThreadPoolExecutor() as exe:
-        futures = {exe.submit(extract_text_from_tiff, p): p for p in tif_paths}
-        for fut in as_completed(futures):
-            old_path = futures[fut]
-            text = fut.result()
+    for old_path in tif_paths:
+        full_text = extract_text_from_tiff(old_path)
+        new_name = parse_new_filename(full_text)
+        new_path = os.path.join(os.path.dirname(old_path), new_name)
 
-            # 2) Ask the parser module for the new filename
-            new_fname = parse_new_filename(text)
-            dirpath = os.path.dirname(old_path)
-            new_path = os.path.join(dirpath, new_fname)
+        os.rename(old_path,new_path)
+        mapping[old_path] = new_path
 
-            # 3) Rename on disk, record mapping
-            os.rename(old_path, new_path)
-            mapping[old_path] = new_path
-    
     return mapping
