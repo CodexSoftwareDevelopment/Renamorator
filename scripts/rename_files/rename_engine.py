@@ -13,6 +13,7 @@ def rename_files(tif_paths: list[str]) -> dict[str, str]:
     mapping: dict[str, str] = {}
 
     for old_path in tif_paths:
+        print(f"\n----\nProcessing: {os.path.basename(old_path)}")
         try:
             full_text = extract_text_from_tiff(old_path)
         except Exception as e:
@@ -21,6 +22,7 @@ def rename_files(tif_paths: list[str]) -> dict[str, str]:
 
         try:
             new_name = parse_new_filename(full_text)
+            print(f"  → New filename will be: '{new_name}'")
         except Exception as e:
             print(f"⚠️ Filename parsing failed for {old_path!r}: {e}")
             continue
@@ -29,6 +31,7 @@ def rename_files(tif_paths: list[str]) -> dict[str, str]:
 
         try:
             os.rename(old_path, new_path)
+            print(f"✅ Renamed to: '{new_name}'")
             mapping[old_path] = new_path
         except OSError as e:
             print(f"⚠️ Failed to rename {old_path!r} → {new_path!r}: {e}")

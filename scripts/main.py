@@ -10,8 +10,14 @@ def main():
     except FileNotFoundError as e:
         print(f"❌ Error: {e}")
         return
+    
+    print("🔍  Found TIF files to process:")
+    for f in files:
+        print("   ", f)
+    print(f"   (total {len(files)})\n")
+
     if not files:
-        print("⚠️  No TIFF files found; please check the folder path.")
+        print("⚠️  No TIF files found; please check the folder path.")
         return
 
     # 2) Run the renaming pipeline

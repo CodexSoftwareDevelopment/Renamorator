@@ -69,8 +69,6 @@ def update_spreadsheet(
             print(f"  MATCH on row {row_idx}!  '{sheet_text}' → '{new_stem}'")
             cell.value = new_stem
             updated_count += 1
-        else:
-            print(f"  no match for '{sheet_text}'")
 
     # 4) Save & close
     if updated_count:
