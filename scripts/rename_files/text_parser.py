@@ -30,10 +30,10 @@ def parse_new_filename(ocr_text: str) -> str:
 
     # 3) Assemble base parts: doc_part, volume, blend
     parts = [doc_part.rstrip(" -")]
-    if meta.get("volume"):
-        parts.append(meta["volume"])
     if meta.get("blend"):
         parts.append(meta["blend"])
+    if meta.get("volume"):
+        parts.append(meta["volume"])
 
     # 4) Equipment codes: only from the same title blocks
     try:

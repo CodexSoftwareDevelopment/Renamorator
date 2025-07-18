@@ -1,5 +1,4 @@
 import os
-
 from rename_files.file_collector import collect_tif_files
 from rename_files.rename_engine import rename_files
 from change_excel.excel_utils import update_spreadsheet

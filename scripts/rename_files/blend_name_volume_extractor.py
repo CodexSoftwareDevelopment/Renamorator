@@ -1,4 +1,3 @@
-import re
 from typing import List, Dict
 from .doc_number_extractor import _DOC_NUM_PATTERN
 
