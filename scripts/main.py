@@ -23,8 +23,11 @@ def main():
 
     # 4) Update the Excel spreadsheet
     try:
-        update_spreadsheet(result)
-        print("✅ Spreadsheet updated.")
+        updated_count = update_spreadsheet(result)
+        if updated_count:
+            print("✅ Spreadsheet updated.")
+        else:
+            print("⚠️ No matching rows; nothing updated.")
     except FileNotFoundError as e:
         print(f"❌ Spreadsheet not found: {e}")
     except ValueError as e:
