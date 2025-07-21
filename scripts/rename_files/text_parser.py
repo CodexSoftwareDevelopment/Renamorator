@@ -1,16 +1,24 @@
+from typing import Callable, List, Tuple
 import re
 from .doc_number_extractor import extract_document_numbers
-from .blend_name_volume_extractor import extract_title_blocks, prompt_for_blend_and_volume
+from .blend_name_volume_extractor import extract_title_blocks
 from .equipment_code_extractor import extract_equipment_codes
 
-def parse_new_filename(ocr_text: str) -> str:
+def parse_new_filename(
+    ocr_text: str,
+    prompt_meta: Callable[[List[str]], Tuple[str, str]]
+) -> str:
     """
-    Build a single new filename by:
-      1) Extracting VP/CVP codes for the doc identifier
-      2) Showing all title blocks at once and prompting for blend & volume
-      3) Combining these pieces with ' - ' and appending .tif
+    Build a new filename by extracting metadata and prompting the user (GUI or CLI).
+
+    Arguments:
+        - ocr_text: OCR'd full document text
+        - prompt_meta: function to prompt user for blend/volume, given blocks
+
+    Returns:
+        New .tif filename
     """
-    # 1) Doc number segment
+    # 1) Document numbers
     try:
         codes = extract_document_numbers(ocr_text)
     except re.error as e:
@@ -19,31 +27,27 @@ def parse_new_filename(ocr_text: str) -> str:
 
     doc_part = " ".join(codes) + " - " if codes else "UNKNOWN - "
 
-    # 2) Title blocks and single prompt
+    # 2) Title blocks and prompt for blend/volume
     try:
         blocks = extract_title_blocks(ocr_text)
     except re.error as e:
-        print(f"⚠️ Document‐number regex failed: {e}")
+        print(f"⚠️ Title-block regex failed: {e}")
         blocks = []
 
-    meta = prompt_for_blend_and_volume(blocks)
+    blend, volume = prompt_meta(blocks)
 
-    # 3) Assemble base parts: doc_part, volume, blend
+    # 3) Assemble parts
     parts = [doc_part.rstrip(" -")]
-    if meta.get("blend"):
-        parts.append(meta["blend"])
-    if meta.get("volume"):
-        parts.append(meta["volume"])
+    if blend:
+        parts.append(blend)
+    if volume:
+        parts.append(volume)
 
-    # 4) Equipment codes: only from the same title blocks
     try:
         equip_codes = extract_equipment_codes(blocks)
-    except re.error as e:
-        print(f"⚠️ Document‐number regex failed: {e}")
-        equip_codes = []
-        
-    if equip_codes:
-        parts.append(" ".join(equip_codes))
+        if equip_codes:
+            parts.append(" ".join(equip_codes))
+    except Exception as e:
+        print(f"⚠️ Equipment-code parsing failed: {e}")
 
-    # Final filename
     return " - ".join(parts) + ".tif"
