@@ -1,66 +1,128 @@
 import os
+from PIL import Image
+from typing import Callable, Dict, List, Tuple
+
 from .file_collector import _extend_windows_path
-from .ocr_utils import extract_text_from_tiff
 from .text_parser import parse_new_filename
+from .ocr_utils import extract_text_from_tiff
 
 def rename_files(
-    tif_paths: list[str],
-    log_fn=print,
-    prompt_fn=None
-) -> dict[str, str]:
+    tif_files: List[str],
+    log_function: Callable[[str], None] = print,
+    prompt_fn: Callable[[List[str]], Tuple[str, str]] = None,
+    progress_fn: Callable[[int, int, str], None] = None,
+    status_fn: Dict[str, Callable] = None
+) -> Dict[str, str]:
     """
-    Rename each TIFF in `tif_paths` by extracting its new name via OCR and parsing.
-    Returns a mapping of old_path -> new_path for successful renames.
-    Accepts:
-        - log_fn: a function for logging (e.g. GUI log window)
-        - prompt_fn: a GUI prompt function for blend/volume input
+    Two‑phase pipeline:
+      1) OCR PASS: OCR every file (pages in parallel), reporting per‑page & overall progress
+      2) PROMPT & RENAME PASS: once all OCR is done, prompt+rename each file
+
+    status_fn keys:
+      'processing' – OCR start
+      'progress'   – each page
+      'ocr_done'   – OCR finish (stop timer)
+      'done'       – rename success
+      'error'      – any failure
     """
-    mapping: dict[str, str] = {}
-    rename_failures = 0
-    total = len(tif_paths)
+    # 1) Pre-scan pages for total count
+    pages_per_file: Dict[str,int] = {}
+    total_pages = 0
+    for path in tif_files:
+        with Image.open(path) as img:
+            try:
+                n = img.n_frames
+            except AttributeError:
+                n = 0
+                while True:
+                    try:
+                        img.seek(n)
+                        n += 1
+                    except EOFError:
+                        break
+        pages_per_file[path] = n
+        total_pages += n
 
-    for index, old_path in enumerate(tif_paths, start=1):
-        log_fn(f"\n=== Processing file {index}/{total} ===")
+    # initialize overall
+    if progress_fn:
+        progress_fn(0, total_pages, "")
 
-        display_old = old_path
-        if os.name == "nt" and old_path.startswith("\\\\?\\"):
-            display_old = old_path[len("\\\\?\\"):]
-        log_fn(f"📂 Old file: {display_old}")
+    ocr_texts: Dict[str,str] = {}
+    global_page = 0
 
-        # 1) OCR
+    # Phase 1: OCR each file one at a time
+    for idx, path in enumerate(tif_files, start=1):
+        fname = os.path.basename(path)
+        per_file_done = 0
+        n_pages = pages_per_file[path]
+
+        # File start
+        if status_fn and "processing" in status_fn:
+            status_fn["processing"](path)
+        if progress_fn:
+            progress_fn(global_page, total_pages, fname)
+        log_function(f"\n=== OCR File {idx}/{len(tif_files)}: {fname} ===")
+
+        def page_cb(page_idx: int, _n: int, fp=path):
+            # monotonic counters
+            nonlocal global_page, per_file_done
+            per_file_done += 1
+            global_page     += 1
+            if status_fn and "progress" in status_fn:
+                status_fn["progress"](fp, per_file_done, n_pages)
+            if progress_fn:
+                progress_fn(global_page, total_pages, fname)
+
+        # Run OCR
         try:
-            text = extract_text_from_tiff(old_path)
-            log_fn(f"🔍 OCR extracted text length: {len(text):,}")
+            text = extract_text_from_tiff(path, page_callback=page_cb)
+            log_function(f"🔍 OCR complete ({len(text)} chars): {fname}")
+            ocr_texts[path] = text
+            # **Stop the timer now that OCR is done**
+            if status_fn and "ocr_done" in status_fn:
+                status_fn["ocr_done"](path)
         except Exception as e:
-            log_fn(f"⚠️ OCR failed for '{display_old}': {e}")
+            log_function(f"❌ OCR failed for {fname}: {e}")
+            if status_fn and "error" in status_fn:
+                status_fn["error"](path)
             continue
 
-        # 2) Parse new filename
+    # Phase 2: Prompt & rename
+    mapping: Dict[str,str] = {}
+    failures = 0
+
+    for idx, path in enumerate(tif_files, start=1):
+        if path not in ocr_texts:
+            continue
+
+        fname = os.path.basename(path)
+        text  = ocr_texts[path]
+        log_function(f"\n=== Prompt & Rename {idx}/{len(ocr_texts)}: {fname} ===")
+
+        # Prompt & parse
         try:
             new_name = parse_new_filename(text, prompt_meta=prompt_fn)
+            log_function(f"✏️ Parsed new filename: {new_name}")
         except Exception as e:
-            log_fn(f"⚠️ Failed to parse new filename: {e}")
+            log_function(f"⚠️ Prompt/parse failed for {fname}: {e}")
+            if status_fn and "error" in status_fn:
+                status_fn["error"](path)
             continue
 
-        log_fn(f"✏️ Parsed new filename: '{new_name}'")
-
-        # 3) Build and extend new path
-        new_path = os.path.join(os.path.dirname(old_path), new_name)
+        # Rename
+        new_path = os.path.join(os.path.dirname(path), new_name)
         new_path = _extend_windows_path(new_path)
-        display_new = new_path
-        if os.name == "nt" and new_path.startswith("\\\\?\\"):
-            display_new = new_path[len("\\\\?\\"):]
-
-        # 4) Attempt rename
         try:
-            os.rename(old_path, new_path)
-            log_fn(f"✅ Renamed -> {display_new}")
-            mapping[old_path] = new_path
-        except OSError as e:
-            log_fn(f"⚠️ Failed to rename '{display_old}' -> '{display_new}': {e}")
-            rename_failures += 1
-            continue
+            os.rename(path, new_path)
+            log_function(f"✅ Renamed → {new_name}")
+            mapping[path] = new_path
+            if status_fn and "done" in status_fn:
+                status_fn["done"](path)
+        except Exception as e:
+            log_function(f"❌ Rename failed for {fname}: {e}")
+            failures += 1
+            if status_fn and "error" in status_fn:
+                status_fn["error"](path)
 
-    success = len(mapping)
-    log_fn(f"\n📈 Rename summary: {success} succeeded, {rename_failures} failed.")
+    log_function(f"\n📈 Finished: {len(mapping)} succeeded, {failures} failed.")
     return mapping
