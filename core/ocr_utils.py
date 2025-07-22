@@ -5,7 +5,9 @@ import numpy as np
 from typing import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
-from header_processor import preprocess_header
+
+# Helpers
+from .header_processor import preprocess_header
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\DeidreClay\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
 

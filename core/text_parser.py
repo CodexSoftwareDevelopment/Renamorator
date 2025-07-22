@@ -1,5 +1,7 @@
 from typing import Callable, List, Tuple
 import re
+
+# Helpers
 from .doc_number_extractor import extract_document_numbers
 from .blend_name_volume_extractor import extract_title_blocks
 from .equipment_code_extractor import extract_equipment_codes

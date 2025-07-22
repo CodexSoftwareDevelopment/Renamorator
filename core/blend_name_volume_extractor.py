@@ -1,4 +1,6 @@
 from typing import List
+
+# Helpers
 from .doc_number_extractor import _DOC_NUM_PATTERN
 
 

@@ -1,5 +1,7 @@
 import os
 from typing import Callable, Dict, Tuple
+
+# Helpers
 from .file_collector import _extend_windows_path
 
 def run_rename_pipeline(

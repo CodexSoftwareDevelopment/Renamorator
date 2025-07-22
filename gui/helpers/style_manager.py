@@ -1,4 +1,3 @@
-# gui/helpers/style_manager.py
 from tkinter import ttk
 
 def apply_theme(style, bg, primary, text, logo_font, header_font, text_font):

@@ -1,6 +1,6 @@
-import tkinter as tk
 from tkinter import ttk
 
+# Helpers
 from gui.helpers.folder_selector import build_folder_selector
 from gui.helpers.spreadsheet_selector import build_spreadsheet_selector
 

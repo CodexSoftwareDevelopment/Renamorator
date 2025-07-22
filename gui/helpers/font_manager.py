@@ -1,4 +1,3 @@
-# gui/helpers/font_manager.py
 import os, ctypes
 from tkinter import font as tkfont
 

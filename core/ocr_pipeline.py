@@ -1,6 +1,8 @@
 import os
 from typing import Callable, Dict, List
 from PIL import Image
+
+# Helpers
 from .ocr_utils import extract_text_from_tiff
 
 def run_ocr_pipeline(
