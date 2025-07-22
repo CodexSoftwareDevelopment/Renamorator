@@ -3,11 +3,11 @@ import threading
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
-from rename_files.rename_engine import rename_files
-from change_excel.excel_utils import update_spreadsheet
-from gui_helpers.dialogs import show_unmatched_dialog
-from gui_helpers.prompts import prompt_gui_for_meta
-from gui_helpers.progress import OCRProgressUI
+from core.rename_engine import rename_files
+from core.excel_utils import update_spreadsheet
+from helpers.dialogs import show_unmatched_dialog
+from helpers.prompts import prompt_gui_for_meta
+from helpers.progress import OCRProgressUI
 
 def run_gui():
     root = tk.Tk()
