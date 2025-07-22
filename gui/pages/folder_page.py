@@ -11,7 +11,7 @@ def build_page(parent, controller):
     logo = ttk.Label(parent, text="Namewise", style="Logo.TLabel")
     logo.grid(row=0, column=0, sticky="w", padx=20, pady=(20,5))
 
-    step = ttk.Label(parent, text="Step 1 of 4", style="Text.TLabel")
+    step = ttk.Label(parent, text="Step 1 of 5", style="Text.TLabel")
     step.grid(row=0, column=1, sticky="e", padx=20, pady=(20,5))
 
     # --- Folder selector (Rows 1–2) ---
@@ -20,10 +20,19 @@ def build_page(parent, controller):
     # --- Spreadsheet selector (Rows 3–5) ---
     spreadsheet_var, same_var = build_spreadsheet_selector(parent, controller)
 
-    # --- Spacer to push button to bottom ---
+    # --- Spacer to push buttons to bottom ---
     parent.grid_rowconfigure(6, weight=1)
 
-    # --- Process button (Row 7) ---
+    # --- Back button (Row 7, Col 0) ---
+    back_btn = ttk.Button(
+        parent,
+        text="Back",
+        style="Accent.TButton",
+        command=controller.back
+    )
+    back_btn.grid(row=7, column=0, sticky="w", padx=20, pady=20)
+
+    # --- Process button (Row 7, Col 1) ---
     def on_process():
         # Save to controller for later pages
         controller.tif_folder = folder_var.get().strip()
@@ -35,13 +44,13 @@ def build_page(parent, controller):
 
         controller.next()
 
-    btn = ttk.Button(
+    process_btn = ttk.Button(
         parent,
         text="Process",
         style="Accent.TButton",
         command=on_process
     )
-    btn.grid(row=7, column=1, sticky="e", padx=20, pady=20)
+    process_btn.grid(row=7, column=1, sticky="e", padx=20, pady=20)
 
     # --- Column weight config ---
     parent.grid_columnconfigure(0, weight=1)
