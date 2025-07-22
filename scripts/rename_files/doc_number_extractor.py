@@ -10,6 +10,7 @@ _DOC_NUM_PATTERN = re.compile(
     r"|AVP\d{3}\.\d{3}"
     # ——— VP variants —————————————
     r"|VP\d{5}\.\d{3}"
+    r"|VP\d{5}[A-Z]\.\d{3}"
     r"|VP\d{5}\.\d{2}[A-Z]"
     r"|VP\d{4}[A-Z]\.\d{3}"
     r"|VP\d{4}\.\d{2}[A-Z]"
@@ -25,7 +26,7 @@ _DOC_NUM_PATTERN = re.compile(
 
 # 2) Very forgiving Document# header matcher to catch VP, AVP, CVP prefixes
 _HEADER_PREFIX_PATTERN = re.compile(
-    r"\bDocument\s*#\s*[:\-\|\s]*?([AC]?VP-?\d{3,5})\b",
+    r"\bDocument\s*#\s*[:\-\|\s]*?([AC]?VP-?\d{3,5}[A-Z]?)\b",
     flags=re.IGNORECASE
 )
 
@@ -41,7 +42,6 @@ def extract_document_numbers(text: str) -> list[str]:
     m.group(1).upper().replace('-', '')
     for m in _HEADER_PREFIX_PATTERN.finditer(text)
     }
-    print("DBG: header_prefixes →", header_prefixes)
 
     # 2) scan for full codes, but only keep those whose prefix matched above
     seen = set()
@@ -51,10 +51,5 @@ def extract_document_numbers(text: str) -> list[str]:
         if prefix in header_prefixes and code not in seen:
             seen.add(code)
             result.append(code)
-
-    if not result:
-        print("DBG: No document numbers extracted, result is empty list.")
-    else:
-        print("DBG: extract_document_numbers result →", result)
 
     return result

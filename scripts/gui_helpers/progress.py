@@ -1,6 +1,7 @@
 import os, tkinter as tk
 from tkinter import ttk
 from datetime import datetime
+from PIL import Image
 
 class OCRProgressUI:
     def __init__(self, parent):
@@ -30,6 +31,7 @@ class OCRProgressUI:
         self.frame.pack(**kw)
 
     def initialize_files(self, file_paths):
+        # clear existing
         for w in self.inner.winfo_children():
             w.destroy()
         self.file_widgets.clear()
@@ -38,6 +40,7 @@ class OCRProgressUI:
         self._timer_jobs.clear()
         self._start_times.clear()
 
+        # reset overall
         self.overall["value"] = 0
         self.overall["maximum"] = 0
         self.current_file_var.set(f"Ready to process {len(file_paths)} files.")
@@ -45,19 +48,26 @@ class OCRProgressUI:
         for p in file_paths:
             row = ttk.Frame(self.inner)
             name = os.path.basename(p)
-            lbl    = ttk.Label(row, text=name, width=40, anchor="w")
-            pb     = ttk.Progressbar(row, length=180, mode="determinate")
-            pages  = ttk.Label(row, text="0/0 pages", width=12)
-            timer  = ttk.Label(row, text="00:00", width=8)
-            icon   = ttk.Label(row, text="", width=2)
+            lbl   = ttk.Label(row, text=name, width=40, anchor="w")
+            pb    = ttk.Progressbar(row, length=180, mode="determinate")
+            # pre-populate total pages
+            try:
+                img = Image.open(p)
+                total_pages = getattr(img, "n_frames", 1)
+            except Exception:
+                total_pages = 0
+            pb["maximum"] = total_pages
+            pages = ttk.Label(row, text=f"0/{total_pages} pages", width=12)
+            timer = ttk.Label(row, text="00:00", width=8)
+            icon  = ttk.Label(row, text="", width=2)
 
             lbl.pack(side="left", padx=(0,5))
             pb.pack(side="left", padx=(0,5))
             pages.pack(side="left", padx=(0,5))
             timer.pack(side="left", padx=(0,5))
             icon.pack(side="left")
-
             row.pack(fill="x", pady=2)
+
             self.file_widgets[p] = (lbl, pb, pages, timer, icon)
 
     def update_overall_progress(self, count, total, filename):
@@ -68,7 +78,8 @@ class OCRProgressUI:
     def set_status_processing(self, file_path):
         lbl, pb, pages, timer, icon = self.file_widgets[file_path]
         pb["value"] = 0
-        pages.config(text="0/0 pages")
+        # reset pages display with known total
+        pages.config(text=f"0/{int(pb['maximum'])} pages")
         icon.config(text="")
         # start timer
         self._start_times[file_path] = datetime.now()
@@ -88,17 +99,14 @@ class OCRProgressUI:
         pages.config(text=f"{page_idx}/{total_pages} pages")
 
     def set_status_ocr_done(self, file_path):
-        # stop the timer right when OCR finishes
         job = self._timer_jobs.pop(file_path, None)
         if job:
             self.frame.after_cancel(job)
 
     def set_status_done(self, file_path):
         lbl, pb, pages, timer, icon = self.file_widgets[file_path]
-        # finalize pages
         pb["value"] = pb["maximum"]
         pages.config(text=f"{int(pb['maximum'])}/{int(pb['maximum'])} pages")
-        # stop timer if still running
         job = self._timer_jobs.pop(file_path, None)
         if job:
             self.frame.after_cancel(job)

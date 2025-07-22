@@ -1,7 +1,7 @@
 from typing import List, Dict
 from .doc_number_extractor import _DOC_NUM_PATTERN
 
-def extract_title_blocks(text: str, context_lines: int = 8) -> List[str]:
+def extract_title_blocks(text: str, context_lines: int = 20) -> List[str]:
     """
     Find every line containing a VP/CVP code, and grab the preceding
     `context_lines` lines as the "official title block."

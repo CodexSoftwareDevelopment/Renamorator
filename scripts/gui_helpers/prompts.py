@@ -6,9 +6,12 @@ def prompt_gui_for_meta(parent, blocks):
     dlg.title("Specify Blend & Volume")
     dlg.grab_set()
 
+    # Display each title block with numbering
     txtblk = tk.Text(dlg, height=10, width=60, wrap="word")
-    for b in blocks:
-        txtblk.insert("end", b + "\n" + ("—" * 40) + "\n")
+    for idx, b in enumerate(blocks, start=1):
+        txtblk.insert("end", f"Title Block {idx}:\n")
+        txtblk.insert("end", b + "\n")
+        txtblk.insert("end", "—" * 40 + "\n")
     txtblk.configure(state="disabled")
     txtblk.pack(padx=10, pady=5)
 
