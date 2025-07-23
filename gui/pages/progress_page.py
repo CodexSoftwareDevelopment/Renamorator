@@ -12,7 +12,7 @@ def build_page(parent, controller):
     # — Header —
     header = ttk.Label(
         parent,
-        text="Step 2 of 5: OCR’ing TIFF files",
+        text="Step 2 of 5: OCRing TIF files",
         style="Header.TLabel"
     )
     header.pack(anchor="w", padx=20, pady=(20,10))
@@ -44,6 +44,7 @@ def build_page(parent, controller):
         # 1) collect the .tif files
         tif_folder = controller.tif_folder
         tif_list   = collect_tif_files(tif_folder)
+        progress_ui.initialize_files(tif_list)
         controller.tif_list = tif_list
 
         # 2) run the OCR pipeline with UI callbacks
