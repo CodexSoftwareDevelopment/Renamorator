@@ -1,4 +1,6 @@
 from tkinter import ttk
+
+# Helpers
 from gui.helpers.summary_computer import compute_summary
 from gui.helpers.summary_text     import build_summary_text
 from gui.helpers.lists            import build_lists
