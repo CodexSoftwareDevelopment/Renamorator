@@ -1,5 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
+
+# Helpers 
+from .validations import validate_spreadsheet
 
 def build_spreadsheet_selector(parent, controller):
     """
@@ -30,10 +33,20 @@ def build_spreadsheet_selector(parent, controller):
     def browse():
         path = filedialog.askopenfilename(
             title="Choose spreadsheet",
-            filetypes=[("Excel files", "*.xlsx *.xlsm *.xls")]
+            filetypes=[("Excel/CSV", "*.xlsx *.xls *.xlsm *.csv")]
         )
-        if path:
-            spreadsheet_var.set(path)
+        if not path:
+            return
+
+        if not validate_spreadsheet(path):
+            messagebox.showerror(
+                "Invalid File",
+                "Please select a .xlsx, .xls, .xlsm or .csv file."
+            )
+            spreadsheet_var.set("")
+            return
+
+        spreadsheet_var.set(path)
 
     btn = ttk.Button(
         parent, text="Browse…", style="Accent.TButton",
@@ -52,6 +65,13 @@ def build_spreadsheet_selector(parent, controller):
         else:
             entry.state(["!disabled"])
             btn.state(["!disabled"])
+            # on re‑enable, re‑validate whatever’s in the box
+            if spreadsheet_var.get() and not validate_spreadsheet(spreadsheet_var.get()):
+                messagebox.showerror(
+                    "Invalid File",
+                    "Please select a .xlsx, .xls, .xlsm or .csv file."
+                )
+                spreadsheet_var.set("")
 
     cb = ttk.Checkbutton(
         parent,

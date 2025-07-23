@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
+from .validations import validate_folder
 
 def build_folder_selector(parent):
     """
@@ -28,8 +29,19 @@ def build_folder_selector(parent):
         path = filedialog.askdirectory(
             title="Choose folder with .tif files"
         )
-        if path:
-            folder_var.set(path)
+        if not path:
+            return
+
+        if not validate_folder(path):
+            messagebox.showerror(
+                "Invalid Folder",
+                "Folder must exist and contain at least one .tif file."
+            )
+            folder_var.set("")
+            return
+
+        # only set if it passes validation
+        folder_var.set(path)
 
     btn = ttk.Button(
         parent, text="Browse…", style="Accent.TButton",

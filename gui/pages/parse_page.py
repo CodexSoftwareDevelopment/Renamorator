@@ -1,11 +1,13 @@
 import os
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
+# Helpers
 from core.text_parser import parse_new_filename
 from gui.helpers.file_viewer    import build_file_view
 from gui.helpers.entry_fields   import build_entry_fields
 from gui.helpers.frame_previewer import build_preview_frame
+from gui.helpers.validations import validate_blend_name, validate_volume
 
 def build_page(parent, controller):
     parent.configure(style="Background.TFrame")
@@ -99,6 +101,16 @@ def build_page(parent, controller):
         # save current blend & volume
         b = nav.blend_var.get().strip()
         v = nav.volume_var.get().strip()
+
+        if not validate_blend_name(b):
+            messagebox.showerror("Invalid Blend Name",
+                                "Blend name can’t contain | or ;")
+            return
+        if not validate_volume(v):
+            messagebox.showerror("Invalid Volume",
+                                'Volume must be empty or like "2 oz" / "50gal".')
+            return
+
         controller.parse_mapping[nav.current_path] = (b, v)
 
         if controller.parse_index < len(controller.tif_list) - 1:
