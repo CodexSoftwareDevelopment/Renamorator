@@ -91,4 +91,6 @@ class Wizard(tk.Tk):
 
 def run():
     app = Wizard()
+    app.geometry("900x700")
+    app.minsize(600, 400)
     app.mainloop()

@@ -33,11 +33,17 @@ def validate_blend_name(name: str) -> bool:
 
 def validate_volume(vol: str) -> bool:
     """
-    Empty is OK. Otherwise must be: number[.number]? + optional space + letters.
-    Examples: "2 oz", "50gal", "10.5kg"
+    Empty is OK. Otherwise must match:
+      - a number (integer or decimal) + 
+      - zero or more 'x<number>' segments (e.g. 'x1', 'X2.5') +
+      - optional space +
+      - optional unit letters
     """
     if not vol:
         return True
-    pattern = r"^\d+(\.\d+)?\s*[A-Za-z]+$"
-    return bool(re.fullmatch(pattern, vol))
 
+    # \d+(?:\.\d+)?       → integer or decimal
+    # (?:[xX]\d+(?:\.\d+)?)* → zero or more 'x<number>' segments
+    # \s*[A-Za-z]*         → optional space then zero-or-more letters
+    pattern = r"^\d+(?:\.\d+)?(?:[xX]\d+(?:\.\d+)?)*\s*[A-Za-z]*$"
+    return bool(re.fullmatch(pattern, vol))

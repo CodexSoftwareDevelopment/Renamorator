@@ -29,10 +29,7 @@ def collect_tif_files(folder_path: str) -> list[str]:
 
     # 3) Show exactly what’s in the directory
     names = os.listdir(folder)
-    print("DEBUG raw names in folder:")
-    for n in names:
-        print("   ", repr(n))
-
+    
     # 4) Collect only real .tif files
     tif_paths: list[str] = []
     for name in names:

@@ -4,12 +4,22 @@ from tkinter import ttk, messagebox
 # Helpers
 from gui.helpers.validations import validate_blend_name, validate_volume
 
-def build_entry_fields(parent, row, existing=(None, None)):
-    blend_val, volume_val = existing
-    blend_var = tk.StringVar(value=blend_val or "")
-    volume_var = tk.StringVar(value=volume_val or "")
+def build_entry_fields(parent, row=2, existing=None):
+    """
+    Creates a small sub-frame inside `parent`, packs it,
+    then grids two rows of Blend/Volume widgets into it.
+    Returns (blend_var, volume_var).
+    """
+    # 1) Make a little container frame and pack it
+    container = tk.Frame(parent)
+    container.pack(fill="x", padx=(10, 0), pady=(5, 5))
 
-    # keep last-good so we can revert on bad input
+    # 2) Prepare the StringVars with any pre-existing values
+    existing = existing or {}
+    blend_var = tk.StringVar(value=existing.get("blend", ""))
+    volume_var = tk.StringVar(value=existing.get("volume", ""))
+
+    # Keep a “last good” copy so we can revert on invalid input
     last = {"blend": blend_var.get(), "volume": volume_var.get()}
 
     def on_blend_change(*_):
@@ -17,7 +27,7 @@ def build_entry_fields(parent, row, existing=(None, None)):
         if not validate_blend_name(v):
             messagebox.showwarning(
                 "Invalid Blend Name",
-                "Blend name can’t contain the following: < > : / \ | ? * \" "
+                'Blend name can’t contain any of: < > : / \\ | ? * "'
             )
             blend_var.set(last["blend"])
         else:
@@ -37,15 +47,15 @@ def build_entry_fields(parent, row, existing=(None, None)):
     blend_var.trace_add("write", on_blend_change)
     volume_var.trace_add("write", on_volume_change)
 
-    # ——— build the UI ———
-    ttk.Label(parent, text="Blend Name:", style="Text.TLabel")\
-       .grid(row=row, column=0, sticky="w", padx=(0,5), pady=(5,0))
-    ttk.Entry(parent, textvariable=blend_var, width=40)\
-       .grid(row=row, column=1, sticky="w", pady=(5,0))
+    # 3) Grid the labels + entries INTO the container
+    ttk.Label(container, text="Blend Name:", style="Text.TLabel") \
+        .grid(row=0, column=0, sticky="w", padx=(0,5), pady=(5,0))
+    ttk.Entry(container, textvariable=blend_var, width=40) \
+        .grid(row=0, column=1, sticky="w", pady=(5,0))
 
-    ttk.Label(parent, text="Volume:", style="Text.TLabel")\
-       .grid(row=row+1, column=0, sticky="w", padx=(0,5), pady=(5,0))
-    ttk.Entry(parent, textvariable=volume_var, width=40)\
-       .grid(row=row+1, column=1, sticky="w", pady=(5,0))
+    ttk.Label(container, text="Volume:", style="Text.TLabel") \
+        .grid(row=1, column=0, sticky="w", padx=(0,5), pady=(5,0))
+    ttk.Entry(container, textvariable=volume_var, width=40) \
+        .grid(row=1, column=1, sticky="w", pady=(5,0))
 
     return blend_var, volume_var

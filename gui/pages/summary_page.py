@@ -1,3 +1,4 @@
+import datetime, os
 from tkinter import ttk
 
 # Helpers
@@ -18,12 +19,34 @@ def build_page(parent, controller):
     header.pack(anchor="w", padx=20, pady=(20,10))
 
     # Compute summary
-    mapping    = getattr(controller, "final_mapping", {})
+    mapping     = getattr(controller, "final_mapping", {})
+    successes   = getattr(controller, "rename_successes", list(mapping.keys()))
+    failures    = getattr(controller, "rename_failures", [])
     spreadsheet = getattr(controller, "spreadsheet", "")
-    num_files, num_updates, unmatched = compute_summary(mapping, spreadsheet)
+
+    num_files, num_updates, unmatched = compute_summary(
+        mapping,
+        spreadsheet,
+        rename_successes=successes
+    )
+
+    ts_sheet = datetime.datetime.now()
+    controller.sheet_updated     = {}
+    controller.sheet_not_updated = {}
+    for old in mapping:
+        stem = os.path.splitext(os.path.basename(old))[0]
+        if stem in unmatched:
+            controller.sheet_not_updated[old] = ts_sheet
+        else:
+            controller.sheet_updated[old]     = ts_sheet
 
     # Build summary text
-    build_summary_text(parent, num_files, num_updates, unmatched)
+    build_summary_text(parent,
+                        num_files,
+                        len(failures),
+                        num_updates,
+                        unmatched)
+
 
     # Build lists
     lists_container = ttk.Frame(parent, style="Background.TFrame")

@@ -1,11 +1,12 @@
+import datetime
 from tkinter import ttk, messagebox
 
 # Helpers
 from core.text_parser import parse_new_filename
-from gui.helpers.file_viewer    import build_file_view
-from gui.helpers.entry_fields   import build_entry_fields
+from gui.helpers.file_viewer     import build_file_view
+from gui.helpers.entry_fields    import build_entry_fields
 from gui.helpers.frame_previewer import build_preview_frame
-from gui.helpers.validations import validate_blend_name, validate_volume
+from gui.helpers.validations     import validate_blend_name, validate_volume
 
 def build_page(parent, controller):
     parent.configure(style="Background.TFrame")
@@ -69,18 +70,15 @@ def build_page(parent, controller):
         build_file_view(content, idx+1, total, path, text)
 
         # prefill existing values if revisiting
-        existing = controller.parse_mapping.get(path, (None, None))
+        tup = controller.parse_mapping.get(path, (None, None))
+        existing = {
+            "blend":  tup[0] or "",
+            "volume": tup[1] or ""
+        }
         blend_var, volume_var = build_entry_fields(content, row=2, existing=existing)
 
         # build preview of past mappings
-        build_preview_frame(preview, {p: nm for p, (b, nm) in [
-            (old, (b, parse_new_filename(controller.ocr_results[old], 
-                (lambda blocks, _b=b, _v=v: (_b, _v)))))
-            for old, (b, v) in controller.parse_mapping.items()
-        ]}) if controller.parse_mapping else None
         if controller.parse_mapping:
-            # simpler: preview only shows old->new strings
-            # mapping: old_path -> new_filename via parse_new_filename
             mapping = {}
             for old, (b, v) in controller.parse_mapping.items():
                 prompt_fn = lambda blocks, _b=b, _v=v: (_b, _v)
@@ -102,11 +100,11 @@ def build_page(parent, controller):
 
         if not validate_blend_name(b):
             messagebox.showerror("Invalid Blend Name",
-                                "Blend name can’t contain | or ;")
+                                 "Blend name can’t contain | or ;")
             return
         if not validate_volume(v):
             messagebox.showerror("Invalid Volume",
-                                'Volume must be empty or like "2 oz" / "50gal".')
+                                 'Volume must be empty or like "2 oz" / "50gal".')
             return
 
         controller.parse_mapping[nav.current_path] = (b, v)
@@ -121,6 +119,19 @@ def build_page(parent, controller):
                 prompt_fn = lambda blocks, _b=b, _v=v: (_b, _v)
                 final[old] = parse_new_filename(controller.ocr_results[old], prompt_fn)
             controller.final_mapping = final
+            # --- ACTUAL DISK RENAME STEP ---
+            from core.file_renamer import run_rename_pipeline
+            successes, failures = run_rename_pipeline(
+                final,
+                log_function=lambda msg: print(msg)  # or hook into a GUI console
+            )
+            # store so summary can report real results
+            controller.rename_successes = successes
+            controller.rename_failures  = failures
+            # timestamp the ones that did succeed
+            ts = datetime.datetime.now()
+            controller.rename_timestamps = { old: ts for old in successes }
+            # then advance to the summary
             controller.next()
 
     def on_back():
