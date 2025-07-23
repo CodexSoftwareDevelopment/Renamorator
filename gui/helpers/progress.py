@@ -45,10 +45,8 @@ class OCRProgressUI:
         """
         p = file_path
         # strip extended-length prefix
-        print("before strip:", repr(p))
         if p.startswith("\\\\?\\"):
             p = p[4:]
-        print(" after strip:", repr(p))
         # normalize separators and up-levels
         p = os.path.normpath(p)
         # convert to absolute path
@@ -96,14 +94,8 @@ class OCRProgressUI:
             row.pack(fill="x", pady=2)
 
             # store widgets under normalized absolute key
-            print()
-            print()
-            print("-------------- STORING KEYS ----------------")
             key = self._normalize_key(p)
             self.file_widgets[key] = (lbl, pb, pages, timer, icon)
-            print("stored key:", key)
-            print()
-            print()
 
     def update_overall_progress(self, count, total, filename):
         self.overall["maximum"] = total
@@ -132,10 +124,6 @@ class OCRProgressUI:
     def set_status_progress(self, file_path, page_idx, total_pages):
         key = self._normalize_key(file_path)
         if key not in self.file_widgets:
-            # debug: print keys to diagnose
-            print(f"[OCRProgressUI] Missing key: {key}")
-            for k in self.file_widgets:
-                print(f"  stored key: {k}")
             raise KeyError(f"No widget found for: {file_path}")
         lbl, pb, pages, timer, icon = self.file_widgets[key]
         pb["maximum"] = total_pages

@@ -40,12 +40,11 @@ def build_page(parent, controller):
     next_btn.pack(side="right")
     next_btn["state"] = "disabled"
 
+    tif_list = collect_tif_files(controller.tif_folder)
+    progress_ui.initialize_files(tif_list)
+    controller.tif_list = tif_list
+
     def worker():
-        # 1) collect the .tif files
-        tif_folder = controller.tif_folder
-        tif_list   = collect_tif_files(tif_folder)
-        progress_ui.initialize_files(tif_list)
-        controller.tif_list = tif_list
 
         # 2) run the OCR pipeline with UI callbacks
         texts = run_ocr_pipeline(

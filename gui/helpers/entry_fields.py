@@ -20,23 +20,23 @@ def build_entry_fields(parent, row, existing=(None, None)):
         parent,
         text="Blend Name:",
         style="Text.TLabel"
-    ).grid(row=row, column=0, sticky="e", padx=(0,5), pady=(5,0))
+    ).pack(side="left", padx=(0,5), pady=(5,0))
     ttk.Entry(
         parent,
         textvariable=blend_var,
         width=40
-    ).grid(row=row, column=1, sticky="w", pady=(5,0))
+    ).pack(side="left", padx=(0,5), pady=(5,0))
 
     # Volume
     ttk.Label(
         parent,
         text="Volume:",
         style="Text.TLabel"
-    ).grid(row=row+1, column=0, sticky="e", padx=(0,5), pady=(5,0))
+    ).pack(side="left", padx=(0,5), pady=(5,0))
     ttk.Entry(
         parent,
         textvariable=volume_var,
         width=40
-    ).grid(row=row+1, column=1, sticky="w", pady=(5,0))
+    ).pack(side="left", padx=(0,5), pady=(5,0))
 
     return blend_var, volume_var
