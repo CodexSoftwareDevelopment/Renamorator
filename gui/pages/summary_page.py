@@ -14,7 +14,6 @@ def build_page(parent, controller):
     header = ttk.Label(
         parent,
         text="Step 5 of 5: Summary & Finish",
-        style="Header.TLabel"
     )
     header.pack(anchor="w", padx=20, pady=(20,10))
 

@@ -2,14 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 # Helpers
-from gui.helpers.font_manager import register_and_load_fonts
-from gui.helpers.style_manager import apply_theme
 from gui.wizard_config import PAGE_ORDER, PAGE_BUILDERS
-
-# Color constants
-BG_COLOR      = "#F5F5F5"  # off‑white background
-PRIMARY_COLOR = "#8FAED0"  # slate‑blue accent
-TEXT_COLOR    = "#333333"  # dark charcoal text
 
 class Wizard(tk.Tk):
     """
@@ -18,23 +11,9 @@ class Wizard(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Namewise")
-        self.configure(bg=BG_COLOR)
-
-        # Load/register bundled fonts and apply our theme
-        self.logo_font, self.header_font, self.text_font = register_and_load_fonts()
-        style = ttk.Style(self)
-        apply_theme(
-            style,
-            bg=BG_COLOR,
-            primary=PRIMARY_COLOR,
-            text=TEXT_COLOR,
-            logo_font=self.logo_font,
-            header_font=self.header_font,
-            text_font=self.text_font
-        )
 
         # Container for all pages
-        container = ttk.Frame(self, style="Background.TFrame")
+        container = ttk.Frame(self)
         container.pack(fill="both", expand=True)
 
         # Prepare each page but defer building
@@ -46,7 +25,7 @@ class Wizard(tk.Tk):
             mod = __import__(module_path, fromlist=[fn_name])
             builder = getattr(mod, fn_name)
 
-            frame = ttk.Frame(container, style="Background.TFrame")
+            frame = ttk.Frame(container)
             self.pages[name]    = frame
             self.builders[name] = builder
             self.built[name]    = False
@@ -90,6 +69,4 @@ class Wizard(tk.Tk):
 
 def run():
     app = Wizard()
-    app.geometry("900x700")
-    app.minsize(600, 400)
     app.mainloop()

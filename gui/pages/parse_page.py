@@ -1,7 +1,7 @@
+import os
 import datetime
 from tkinter import ttk, messagebox
 
-# Helpers
 from core.text_parser import parse_new_filename
 from gui.helpers.file_viewer     import build_file_view
 from gui.helpers.entry_fields    import build_entry_fields
@@ -9,141 +9,158 @@ from gui.helpers.frame_previewer import build_preview_frame
 from gui.helpers.validations     import validate_blend_name, validate_volume
 
 def build_page(parent, controller):
-    parent.configure(style="Background.TFrame")
+    controller.geometry("1400x700")
 
-    # --- Header ---
-    header = ttk.Label(
-        parent,
-        text="Step 4 of 5: Parse Blend & Volume",
-        style="Header.TLabel"
+    # --- Layout Grid ---
+    parent.grid_columnconfigure(0, weight=3, minsize=900)
+    parent.grid_columnconfigure(1, weight=2, minsize=350)
+    for i in range(5):  # allow for more flexible rows
+        parent.grid_rowconfigure(i, weight=0)
+    parent.grid_rowconfigure(1, weight=1)
+
+    # --- Header (Centered) ---
+    header = ttk.Label(parent, text="Step 4 of 5: Parse Blend & Volume", anchor="center", font=("Segoe UI", 14, "bold"))
+    header.grid(row=0, column=0, columnspan=2, pady=(20,10), sticky="ew")
+
+    # --- LEFT: Old/New Filename Mapping ---
+    left_frame = ttk.Frame(parent, style="Background.TFrame")
+    left_frame.grid(row=1, column=0, rowspan=3, sticky="nsew", padx=(20,10), pady=(0,10))
+
+    map_list = ttk.Treeview(
+        left_frame,
+        columns=("old", "new"),
+        show="headings",
+        height=20
     )
-    header.grid(row=0, column=0, columnspan=2, sticky="w",
-                padx=20, pady=(20,10))
 
-    # --- Content frame for current file ---
+    map_list.heading("old", text="Old Filename", anchor="center")
+    map_list.heading("new", text="New Filename", anchor="center")
+
+    map_list.column("old", anchor="w", stretch=True)
+    map_list.column("new", anchor="w", stretch=True)
+
+    vsb = ttk.Scrollbar(left_frame, orient="vertical", command=map_list.yview)
+    map_list.configure(yscrollcommand=vsb.set)
+
+    map_list.grid(row=0, column=0, sticky="nsew")
+    vsb.grid(row=0, column=1, sticky="ns")
+
+    left_frame.grid_rowconfigure(0, weight=1)
+    left_frame.grid_columnconfigure(0, weight=1)
+
+    # --- RIGHT: Content Frame ---
     content = ttk.Frame(parent, style="Background.TFrame")
-    content.grid(row=1, column=0, columnspan=2, sticky="nsew",
-                 padx=20, pady=10)
-    parent.rowconfigure(1, weight=1)
-    parent.columnconfigure(0, weight=1)
-    parent.columnconfigure(1, weight=1)
+    content.grid(row=1, column=1, sticky="nsew", padx=(0, 20), pady=(0,5))
+    content.grid_columnconfigure(0, weight=1)
 
-    # --- Preview frame for completed mappings ---
+    # --- Preview Frame (below content) ---
     preview = ttk.Frame(parent, style="Background.TFrame")
-    preview.grid(row=2, column=0, columnspan=2, sticky="nsew",
-                 padx=20, pady=(0,10))
-    preview.columnconfigure(0, weight=1)
+    preview.grid(row=2, column=1, sticky="nsew", padx=(0, 20), pady=(0,5))
+    preview.grid_columnconfigure(0, weight=1)
 
-    # --- Navigation bar ---
+    # --- Entry Fields (now below preview) ---
+    entry_fields = ttk.Frame(parent, style="Background.TFrame")
+    entry_fields.grid(row=3, column=1, sticky="ew", padx=(0, 20), pady=(0,10))
+    entry_fields.grid_columnconfigure(1, weight=1)
+
+    # --- Navigation Buttons ---
     nav = ttk.Frame(parent, style="Background.TFrame")
-    nav.grid(row=3, column=0, columnspan=2, sticky="ew",
-             padx=20, pady=20)
-    nav.columnconfigure(0, weight=1)
-    nav.columnconfigure(1, weight=1)
-    nav.columnconfigure(2, weight=1)
+    nav.grid(row=4, column=0, columnspan=2, sticky="ew", padx=20, pady=20)
+    nav.grid_columnconfigure(0, weight=1)
+    nav.grid_columnconfigure(2, weight=1)
 
-    back_btn = ttk.Button(nav, text="Back", style="Accent.TButton",
-                          command=lambda: on_back())
+    back_btn = ttk.Button(nav, text="Back", command=lambda: on_back())
     back_btn.grid(row=0, column=0, sticky="w")
-
-    next_btn = ttk.Button(nav, text="Next", style="Accent.TButton",
-                          command=lambda: on_next())
+    next_btn = ttk.Button(nav, text="Next", style="Accent.TButton", command=lambda: on_next())
     next_btn.grid(row=0, column=2, sticky="e")
 
-    # --- Initialize parse state ---
+    # --- Controller Init ---
     if not hasattr(controller, "parse_index"):
-        controller.parse_index   = 0
-        controller.parse_mapping = {}  # old_path -> (blend, volume)
+        controller.parse_index = 0
+        controller.parse_mapping = {}
+
+    def refresh_map_list():
+        map_list.delete(*map_list.get_children())
+        for old_path, (b_val, v_val) in controller.parse_mapping.items():
+            new_name = parse_new_filename(
+                controller.ocr_results[old_path],
+                lambda blocks, blend=b_val, volume=v_val: (blend, volume)
+            )
+            disp_new = new_name.replace("\n", " ")
+            map_list.insert("", "end", values=(os.path.basename(old_path), disp_new))
 
     def show_file():
-        # clear previous widgets
+        refresh_map_list()
+
         for w in content.winfo_children(): w.destroy()
         for w in preview.winfo_children(): w.destroy()
+        for w in entry_fields.winfo_children(): w.destroy()
 
-        idx   = controller.parse_index
+        idx = controller.parse_index
         files = controller.tif_list
-        total = len(files)
-        path  = files[idx]
-        text  = controller.ocr_results[path]
+        path = files[idx]
+        text = controller.ocr_results[path]
 
-        # build file view (counter + title blocks)
-        build_file_view(content, idx+1, total, path, text)
+        build_file_view(content, idx+1, len(files), path, text)
 
-        # prefill existing values if revisiting
-        tup = controller.parse_mapping.get(path, (None, None))
-        existing = {
-            "blend":  tup[0] or "",
-            "volume": tup[1] or ""
-        }
-        blend_var, volume_var = build_entry_fields(content, row=2, existing=existing)
+        b_exist, v_exist = controller.parse_mapping.get(path, ("", ""))
+        blend_var, volume_var = build_entry_fields(entry_fields, existing={"blend": b_exist, "volume": v_exist})
 
-        # build preview of past mappings
-        if controller.parse_mapping:
-            mapping = {}
-            for old, (b, v) in controller.parse_mapping.items():
-                prompt_fn = lambda blocks, _b=b, _v=v: (_b, _v)
-                mapping[old] = parse_new_filename(controller.ocr_results[old], prompt_fn)
-            build_preview_frame(preview, mapping)
-
-        # update Next button text
-        next_btn.config(text="Finish" if idx == total-1 else "Next")
-
-        # attach current inputs to nav
-        nav.blend_var    = blend_var
-        nav.volume_var   = volume_var
+        nav.blend_var = blend_var
+        nav.volume_var = volume_var
         nav.current_path = path
 
+        if controller.parse_mapping:
+            summary = {
+                old: parse_new_filename(
+                    controller.ocr_results[old],
+                    lambda blocks, blend=b, volume=v: (blend, volume)
+                )
+                for old, (b, v) in controller.parse_mapping.items()
+            }
+            build_preview_frame(preview, summary)
+
     def on_next():
-        # save current blend & volume
-        b = nav.blend_var.get().strip()
-        v = nav.volume_var.get().strip()
+        blend = nav.blend_var.get().strip()
+        volume = nav.volume_var.get().strip()
 
-        if not validate_blend_name(b):
-            messagebox.showerror("Invalid Blend Name",
-                                 "Blend name can’t contain | or ;")
+        if not validate_blend_name(blend):
+            messagebox.showerror("Invalid Blend Name", "No ‘|’ or ‘;’ allowed.")
             return
-        if not validate_volume(v):
-            messagebox.showerror("Invalid Volume",
-                                 'Volume must be empty or like "2 oz" / "50gal".')
+        if not validate_volume(volume):
+            messagebox.showerror("Invalid Volume", "Must be empty or like ‘2 oz’.")
             return
 
-        controller.parse_mapping[nav.current_path] = (b, v)
+        controller.parse_mapping[nav.current_path] = (blend, volume)
 
         if controller.parse_index < len(controller.tif_list) - 1:
             controller.parse_index += 1
             show_file()
         else:
-            # build final mapping: old_path -> new_filename
-            final = {}
-            for old, (b, v) in controller.parse_mapping.items():
-                prompt_fn = lambda blocks, _b=b, _v=v: (_b, _v)
-                final[old] = parse_new_filename(controller.ocr_results[old], prompt_fn)
+            final = {
+                old: parse_new_filename(
+                    controller.ocr_results[old],
+                    lambda blocks, blend=b_val, volume=v_val: (blend, volume)
+                )
+                for old, (b_val, v_val) in controller.parse_mapping.items()
+            }
             controller.final_mapping = final
-            # --- ACTUAL DISK RENAME STEP ---
+
             from core.file_renamer import run_rename_pipeline
-            successes, failures = run_rename_pipeline(
-                final,
-                log_function=lambda msg: print(msg)  # or hook into a GUI console
-            )
-            # store so summary can report real results
+            successes, failures = run_rename_pipeline(final, log_function=lambda m: print(m))
             controller.rename_successes = successes
-            controller.rename_failures  = failures
-            # timestamp the ones that did succeed
-            ts = datetime.datetime.now()
-            controller.rename_timestamps = { old: ts for old in successes }
-            # then advance to the summary
+            controller.rename_failures = failures
+            controller.rename_timestamps = {old: datetime.datetime.now() for old in successes}
             controller.next()
 
     def on_back():
-        # save current state, then go back or to previous page
-        b = nav.blend_var.get().strip()
-        v = nav.volume_var.get().strip()
-        controller.parse_mapping[nav.current_path] = (b, v)
+        blend = nav.blend_var.get().strip()
+        volume = nav.volume_var.get().strip()
+        controller.parse_mapping[nav.current_path] = (blend, volume)
         if controller.parse_index > 0:
             controller.parse_index -= 1
             show_file()
         else:
             controller.back()
 
-    # display the first (or resumed) file
     show_file()

@@ -1,27 +1,30 @@
+import tkinter.font as tkfont
 from tkinter import ttk
 
-def build_page(parent, controller):
-    parent.configure(style="Background.TFrame")
 
-    # Make 2 equal columns for button alignment
+def build_page(parent, controller):
+    """
+    Construct the Start page with a compact layout:
+      - Title and description at top
+      - Buttons just below
+      - Blank row at bottom absorbs extra space
+    """
+    controller.geometry("500x165")
+
+    # Configure columns to center content, and a bottom row for spacing
     parent.grid_columnconfigure(0, weight=1)
     parent.grid_columnconfigure(1, weight=1)
-    # Push buttons to bottom
-    parent.grid_rowconfigure(2, weight=1)
+    parent.grid_rowconfigure(3, weight=1)  # spacer row
 
-    # Logo (big, centered at top)
-    logo = ttk.Label(
-        parent,
-        text="Namewise",
-        style="Logo.TLabel"
-    )
+    # Title (bold, slightly larger)
+    logo_font = tkfont.Font(size=18, weight="bold")
+    logo = ttk.Label(parent, text="Namewise", font=logo_font)
     logo.grid(
         row=0, column=0, columnspan=2,
-        pady=(40, 10),
-        sticky="n"
+        pady=(10, 5), sticky="n"
     )
 
-    # Description
+    # Description (wrapped, centered)
     desc = ttk.Label(
         parent,
         text=(
@@ -29,38 +32,24 @@ def build_page(parent, controller):
             "blend names and volumes via OCR, then updates your spreadsheet "
             "with the new filenames—all in one streamlined wizard!"
         ),
-        style="Text.TLabel",
-        wraplength=600,
+        wraplength=450,
         justify="center"
     )
     desc.grid(
         row=1, column=0, columnspan=2,
-        padx=100, pady=(0, 40),
-        sticky="n"
+        padx=30, pady=(0, 10), sticky="n"
     )
 
-    # Close button (bottom‑left)
+    # Buttons container (compact)
+    btn_frame = ttk.Frame(parent)
+    btn_frame.grid(row=2, column=0, columnspan=2, pady=(5, 10))
+
     close_btn = ttk.Button(
-        parent,
-        text="Close",
-        style="Accent.TButton",
-        command=controller.destroy
+        btn_frame, text="Close", command=controller.destroy
     )
-    close_btn.grid(
-        row=2, column=0,
-        padx=20, pady=20,
-        sticky="w"
-    )
+    close_btn.pack(side="left", padx=8)
 
-    # Begin button (bottom‑right)
     begin_btn = ttk.Button(
-        parent,
-        text="Begin",
-        style="Accent.TButton",
-        command=controller.next
+        btn_frame, text="Begin", command=controller.next
     )
-    begin_btn.grid(
-        row=2, column=1,
-        padx=20, pady=20,
-        sticky="e"
-    )
+    begin_btn.pack(side="left", padx=8)

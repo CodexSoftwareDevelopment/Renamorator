@@ -1,5 +1,6 @@
 import threading
 from tkinter import ttk
+from tkinter.font import Font as tkfont
 
 # Helpers
 from core.file_collector  import collect_tif_files
@@ -7,13 +8,16 @@ from core.ocr_pipeline    import run_ocr_pipeline
 from gui.helpers.progress import OCRProgressUI
 
 def build_page(parent, controller):
-    parent.configure(style="Background.TFrame")
+    controller.geometry("900x700")
+    controller.minsize(500, 200)
 
     # — Header —
+    header_font = tkfont(size=14, weight="bold")
+
     header = ttk.Label(
         parent,
         text="Step 2 of 5: OCRing TIF files",
-        style="Header.TLabel"
+        font=header_font
     )
     header.pack(anchor="w", padx=20, pady=(20,10))
 

@@ -102,11 +102,8 @@ def build_button_bar(parent, controller):
 
     # Process More Files
     def on_more():
-        # Reset per‑run state on the controller
-        for attr in ("parse_index", "parse_mapping", "final_mapping", "ocr_results", "tif_list"):
-            if hasattr(controller, attr):
-                setattr(controller, attr, {} if "mapping" in attr else [])
-        # Go back to folder page
+        controller.last_spreadsheet = ""
+        controller.tif_folder       = ""
         controller.show("folder_page")
 
     more_btn = ttk.Button(

@@ -50,12 +50,12 @@ def build_entry_fields(parent, row=2, existing=None):
     # 3) Grid the labels + entries INTO the container
     ttk.Label(container, text="Blend Name:", style="Text.TLabel") \
         .grid(row=0, column=0, sticky="w", padx=(0,5), pady=(5,0))
-    ttk.Entry(container, textvariable=blend_var, width=40) \
+    ttk.Entry(container, textvariable=blend_var, width=59) \
         .grid(row=0, column=1, sticky="w", pady=(5,0))
 
     ttk.Label(container, text="Volume:", style="Text.TLabel") \
         .grid(row=1, column=0, sticky="w", padx=(0,5), pady=(5,0))
-    ttk.Entry(container, textvariable=volume_var, width=40) \
+    ttk.Entry(container, textvariable=volume_var, width=59) \
         .grid(row=1, column=1, sticky="w", pady=(5,0))
 
     return blend_var, volume_var

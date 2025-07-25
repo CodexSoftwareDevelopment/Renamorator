@@ -4,14 +4,13 @@ from .validations import validate_folder
 
 def build_folder_selector(parent):
     """
-    Adds the “1) Select your .tif folder” header, entry box, and Browse button.
+    Adds the “Select your .tif folder” header, entry box, and Browse button.
     Returns the StringVar holding the chosen folder path.
     """
     # Header
     header = ttk.Label(
         parent,
-        text="1) Select your .tif folder",
-        style="Header.TLabel"
+        text="Select your .tif folder",
     )
     header.grid(row=1, column=0, columnspan=2, sticky="w",
                 padx=20, pady=(10,5))
@@ -20,7 +19,7 @@ def build_folder_selector(parent):
     folder_var = tk.StringVar()
     entry = ttk.Entry(
         parent, textvariable=folder_var,
-        style="Text.TLabel", width=50
+        width=85
     )
     entry.grid(row=2, column=0, sticky="w",
                padx=20, pady=5)
