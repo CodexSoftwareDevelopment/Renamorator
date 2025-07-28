@@ -15,11 +15,6 @@ def compute_summary(mapping: dict,
     # use actual successes count if provided
     num_files = len(rename_successes) if rename_successes is not None else len(mapping)
 
-    try:
-        num_updates, unmatched = update_spreadsheet(mapping, spreadsheet)
-    except Exception:
-        # If updating fails entirely, treat all as unmatched
-        num_updates = 0
-        unmatched  = list(mapping.keys())
+    num_updates, unmatched = update_spreadsheet(mapping, spreadsheet)
 
     return num_files, num_updates, unmatched

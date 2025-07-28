@@ -13,15 +13,8 @@ def update_spreadsheet(
     fuzzy_threshold: float = 0.9
 ) -> Tuple[int, List[str]]:
     """
-    Updates the spreadsheet's Document Name column for each file in `mapping`
-    where:
-      1) The VP code(s) extracted from the new filename match the spreadsheet.
-      2) The old filename stem matches fuzzily (>= fuzzy_threshold) the existing
-         text in the Document Name column.
-
-    If there are **multiple** VP codes in the new filename, it will write **all**
-    of them (comma‑separated) into the Document Number column.
-
+    Updates the spreadsheet's Document Name column for each file in `mapping`, and fills the Document Number column.
+    Scans all rows in the worksheet.
     Returns:
       - updates: the number of rows actually changed
       - unmatched: list of old filename stems that had no acceptable match
@@ -30,7 +23,7 @@ def update_spreadsheet(
     if not os.path.isfile(abs_path):
         raise FileNotFoundError(f"Spreadsheet not found: {abs_path}")
 
-    # Load (and retry if locked)
+    # Load workbook (and retry if locked/open)
     while True:
         try:
             wb = load_workbook(abs_path)
@@ -55,7 +48,9 @@ def update_spreadsheet(
             break
     if not doc_col_idx or not number_col_idx:
         wb.close()
-        raise ValueError(f"Headers '{doc_col_header}' and/or '{number_col_header}' not found in the first {header_search_depth} rows.")
+        raise ValueError(
+            f"Headers '{doc_col_header}' and/or '{number_col_header}' not found in the first {header_search_depth} rows."
+        )
 
     # Build a map: old_stem -> (new_stem, [vp_codes...])
     vp_re = re.compile(r"(C?VP\d{3,5}\.\d{3})", flags=re.IGNORECASE)
@@ -70,43 +65,29 @@ def update_spreadsheet(
     unmatched: List[str] = []
     last_row = ws.max_row
 
-    # For each file, scan all rows until we find a match
+    # Scan every row after the header
     for old_stem, (new_stem, vp_codes) in stem_map.items():
+        tokens = re.findall(r"\w+", old_stem.lower())
+        if not tokens:
+            unmatched.append(old_stem)
+            continue
         found = False
         for row in range(header_row + 1, last_row + 1):
-            num_cell  = ws.cell(row, number_col_idx)
+            num_cell = ws.cell(row, number_col_idx)
             name_cell = ws.cell(row, doc_col_idx)
-            num_val   = (num_cell.value or "").strip()
-            name_val  = (name_cell.value or "").strip()
+            num_val = (num_cell.value or "").strip()
+            name_val = (name_cell.value or "").strip()
 
-            # We require that at least one of the VP codes matches num_val (or that
-            # existing spreadsheet has a subset), but once we commit, we'll write all.
-            # First do fuzzy name‑stem match:
-            tokens      = re.findall(r"\w+", old_stem.lower())
             name_tokens = re.findall(r"\w+", name_val.lower())
-            if not tokens:
-                continue
             matches = sum(1 for t in tokens if t in name_tokens)
-            ratio   = matches / len(tokens)
-            if ratio < fuzzy_threshold:
-                continue
+            ratio = matches / len(tokens)
 
-            # OK name matched fuzzily—now verify that at least one vp_code is already there
-            # or allow empty to fill in.  If multiple codes, we'll overwrite with all.
-            if num_val and not any(code == num_val for code in vp_codes):
-                # existing single-code mismatch; but we can still update if it's empty
-                # or we choose to overwrite when codes differ.  For safety, only require
-                # that num_val is empty or matches one code.
-                continue
-
-            # All conditions met: update!
-            # 1) Write new document name
-            name_cell.value = new_stem
-            # 2) Write all vp_codes as comma-sep into Document Number
-            num_cell.value = ", ".join(vp_codes)
-            updates += 1
-            found = True
-            break
+            if ratio >= fuzzy_threshold and ((not num_val) or str(num_val).strip() in vp_codes):
+                name_cell.value = new_stem
+                num_cell.value = ", ".join(vp_codes)
+                updates += 1
+                found = True
+                break
 
         if not found:
             unmatched.append(old_stem)

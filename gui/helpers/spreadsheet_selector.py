@@ -31,7 +31,7 @@ def build_spreadsheet_selector(parent, controller):
     def browse():
         path = filedialog.askopenfilename(
             title="Choose spreadsheet",
-            filetypes=[("Excel/CSV", "*.xlsx *.xls *.xlsm *.csv")]
+            filetypes=[("Excel Workbook", "*.xlsx *.xlsm")]
         )
         if not path:
             return

@@ -14,11 +14,11 @@ def validate_folder(path: str) -> bool:
 
 def validate_spreadsheet(path: str) -> bool:
     """
-    Returns True if path is an existing file ending in .xlsx, .xls, or .csv.
+    Returns True if path is an existing .xlsx or .xlsm workbook.
     """
     if not os.path.isfile(path):
         return False
-    return path.lower().endswith(('.xlsx', '.xls', '.xlsm', '.csv'))
+    return path.lower().endswith(('.xlsx', '.xlsm'))
 
 def validate_blend_name(name: str) -> bool:
     """
